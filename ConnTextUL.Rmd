@@ -1,0 +1,48 @@
+---
+title: "ConnTextUL"
+output: html_document
+date: "2023-06-23"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+requires('scripts/requirements.txt')
+source('scripts/utilities.R')
+source('scripts/load.R')
+
+```
+
+# Phonological predictions (Variable: `phon_prediction_features`)
+The phonological predictions are written in the file as strings with phonemes separated by `;`. In order to parse those we need to separate the phonemes based on the presence of `;` and convert to numeric. We process those into (at least) two different forms: one version with all phonemes concatenated into a single numeric vector, and a second where the phonemes are preserved as separate segments. Note that the predictions are not padded, so the prediction for a word with 5 phonemes will be different than that with 7 phonemes, where the prediction (of course) should match the length of the target.
+
+```{r}
+View(head(preds))
+
+```
+
+```{r phoneme_features}
+phon_features = c("labial", "dental", "alveolar", "palatal", "velar", "glottal", "stop", "fricative", 
+             "affricate", "nasal", "liquid", "glide", "rhotic", "tap", "voice", "front", "center",
+             "back", "close", "close-mid", "mid", "open-mid", "near-open", "open", "tense", "retroflex",
+             "round", "post_y", "post_w", "primary", "secondary", "sos", "eos")
+
+```
+
+# Phonological prediction probabilities (Variable: `phon_prediction_probabilities`)
+
+
+
+# Analyses by phoneme
+Here is the tabulation of mistakes over phonemes.
+```{r}
+preds_by_phoneme %>% 
+  filter(correct == 0,
+         condition == "predicted") %>% 
+  select(all_of(phon_features)) %>% 
+  pivot_longer(everything()) %>% 
+  ggplot(aes(name, value)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
