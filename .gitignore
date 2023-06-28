@@ -8,3 +8,11 @@
 
 
 resources/
+
+
+# specific files
+
+# too big:
+data/global_encodings_distances.csv
+data/o2p_predictions.csv
+data/preds_by_phoneme.csv
