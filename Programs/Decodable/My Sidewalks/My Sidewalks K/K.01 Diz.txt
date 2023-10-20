@@ -1,0 +1,6 @@
+Diz. 
+I am Diz.
+I am Nat.
+Nat can hop.
+Diz can not hop.
+Diz can hop.

@@ -1,0 +1,49 @@
+Pick a Pet.
+
+Pets to Pick.
+I will pick a pet.
+
+Do you want birds?
+No, not birds.  Birds shed feathers.
+
+Then do you wish for turtles?
+Turtles can swim.
+Not turtles.
+
+You do not wish for birds or turtles.  
+Will you pick fish?
+
+I will not pick fish 
+or birds or turtles.
+
+Perhaps you will pick chimps.  
+Chimps are fun.
+
+I will not pick chimps!  
+I will not pick birds or turtles 
+or fish or chimps.
+
+A Pet is Picked.
+
+Perhaps you will pick caterpillars.  
+Caterpillars will turn into moths.
+
+Caterpillars will not do.  
+I will not pick birds or turtles 
+or fish or chimps or caterpillars.
+
+Then will you pick panthers?  
+Panthers are big black cats.
+
+Panthers are not good pets.  
+I will not pick birds or turtles 
+or fish.  I will not pick chimps 
+or caterpillars or panthers.
+
+Then what pet will you pick?
+
+I will pick an octopus.  
+An octopus will fetch and whirl.
+
+An octopus!  Then you must tell him to 
+keep his hands and arms off my stuff.

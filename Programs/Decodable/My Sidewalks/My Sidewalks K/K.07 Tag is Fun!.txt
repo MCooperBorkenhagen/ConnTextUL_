@@ -1,0 +1,12 @@
+Tag is Fun!
+Tap! Diz is it.
+Can Diz tag Max?
+Diz can not tag Max.
+Tap! Ron is it.
+Can Ron tag Diz?
+Ron is not fast.
+He can not tag Diz.
+Tap! Pam is it.
+Can Pam tag Ron?
+Yes, Pam can tag Ron.
+Tag is fun.
