@@ -40,6 +40,39 @@ L2 = function(x, y){
 }
 
 
+L2_sum = function(...){
+
+  print(paste("Length:", length(c(...))))
+  return(sqrt(sum((c(...))^2)))
+  
+}
+
+
+L2x = function(...){
+  
+  #' This is a more forceful version of L2() which coerces NA values to 0
+  
+  args_ = c(...)
+  x = args_[1]
+  y = args_[2]
+  
+  
+  if (length(args_) > 2){
+    warning("More than two input arguments provided. Only the first two taken.\n")
+  }
+  if (is.na(args_[1])){
+    x = 0
+    warning("First input argument provided was NA - coreced to Zero.\n")
+  }
+  if (is.na(args_[2])){
+    y = 0
+    warning("Second input argument provided was missing/NA - coreced to Zero.\n")
+  }
+  
+  return(sqrt(sum((x - y)^2)))
+  
+}
+
 
 
 correct_unitwise_probabilities = function(predicted, target, strip_final = T, units_per_segment = 33){
@@ -74,9 +107,65 @@ correct_unitwise_probabilities = function(predicted, target, strip_final = T, un
 }
 
 
-difference = function(x, y){
+L2c = function(...){
   
-  return(x-y)
+  #' An elementwise application of L2 (rather than vector-wise)
+  #' @param ... Numeric elements over which to calculated Euclidean distance
+  #' @returns The square root of the sum of the squared elements provided in ...
+  x = c(...)
+  return(sqrt(sum((x)^2)))
   
 }
 
+summarise_across_ends_with <- function(data, suffix, fun_) {
+  
+  grouping_vars <- data %>% groups()
+  
+  data %>%
+    group_by(across(all_of(grouping_vars))) %>%
+    summarise(across(ends_with(suffix), fun_))
+  
+  # data %>%
+  #   group_by(across(.vars = everything())) %>%
+  #   summarise(across(ends_with(suffix), fun_))
+  
+  }
+
+
+
+difference = function(...){
+  
+  args_ = c(...)
+  x = args_[1]
+  y = args_[2]
+  
+  if (length(args_) > 2){
+    warning("More than two input arguments provided. Only the first two taken.\n")
+  }
+  if (is.na(args_[1])){
+    x = 0
+    warning("First input argument provided was NA - coreced to Zero.\n")
+  }
+  if (is.na(args_[2])){
+    y = 0
+    warning("Second input argument provided was missing/NA - coreced to Zero.\n")
+  }
+  
+  return(x-y)
+  }
+
+
+stress_pattern = function(x){
+  
+  return(paste(str_extract_all(x, "\\d+")[[1]], collapse = ""))
+  
+}
+
+
+phon_features = c("labial_feature", "dental_feature", "alveolar_feature", "palatal_feature", "velar_feature",
+                  "glottal_feature", "stop_feature", "fricative_feature", "affricate_feature", "nasal_feature",
+                  "liquid_feature", "glide_feature", "rhotic_feature", "tap_feature", "voice_feature", "front_feature",
+                  "center_feature", "back_feature", "close_feature", "close_mid_feature", "mid_feature", 
+                  "open_mid_feature", "near_open_feature", "open_feature", "tense_feature", "retroflex_feature",
+                  "round_feature", "post_y_feature", "post_w_feature", "primary_feature", "secondary_feature",
+                  "sos_feature", "eos_feature")
