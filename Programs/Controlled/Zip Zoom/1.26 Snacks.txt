@@ -1,0 +1,8 @@
+ Snacks
+"What is in your new backpack?"
+"I have this sack," said Jack.
+What is in the sack?
+"My snack is in it," said Jack.
+"What is in your black backpack?"
+"Is there a snack for you?" said Jack.
+"Yes, I have a snack and this, too!"

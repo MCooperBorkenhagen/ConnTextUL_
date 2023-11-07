@@ -1,0 +1,11 @@
+Swim.
+The ducks can swim.
+The fish can swim.
+The dogs can swim.
+The frogs can swim.
+The turtles can swim.
+The bears can swim.
+The seals can swim.
+I can swim.
+
+

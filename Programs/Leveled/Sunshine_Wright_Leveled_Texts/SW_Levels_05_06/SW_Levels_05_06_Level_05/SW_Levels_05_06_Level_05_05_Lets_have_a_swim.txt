@@ -1,0 +1,31 @@
+Let's Have a Swim!
+
+The buffalo jumped in.
+The baboon jumped in.
+"Let's have a swim!"
+
+The hippopotamus jumped in.
+The giraffe jumped in.
+"Let's have a swim!"
+
+The zebra jumped in.
+The elephant jumped in.
+"Let's have a swim!"
+
+The crocodile jumped in.
+
+The buffalo jumped out.
+
+The baboon jumped out.
+
+The hippopotamus jumped out.
+
+The giraffe jumped out.
+
+The zebra jumped out.
+
+The elephant jumped out.
+
+The crocodile stayed in,
+and the crocodile
+had a swim.

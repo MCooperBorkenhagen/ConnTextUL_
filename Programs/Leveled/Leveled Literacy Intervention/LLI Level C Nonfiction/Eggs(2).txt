@@ -1,0 +1,21 @@
+Egg.s
+Mother Hen laid some eggs.
+Crack! Crack! Crack! Baby chicks came out.
+Mother Snake laid some eggs.
+Crack! Crack! Crack! Baby snakes came out.
+Mother Fish laid some eggs.
+Pop! Pop! Pop! Baby fish came out.
+Mother Turtle laid some eggs.
+Crack! Crack! Crack! Baby turtle came out.
+Mother Spider laid some eggs.
+Pop! Pop! Pop! Baby spiders came out.
+Mother Penguin laid some eggs.
+Crack! Crack! Crack! Baby penguins came out.
+Mother Duck laid some eggs.
+Crack! Crack! Crack! Baby ducks came out.
+Quack! Quack! Quack!
+
+
+
+
+

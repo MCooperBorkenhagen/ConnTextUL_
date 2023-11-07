@@ -1,0 +1,8 @@
+ See the Cat and Dog
+Mom can see the dog in the room.
+The dog is sad.
+Dad can see the cat in the room.
+The cat is sad.
+I can see Mom.
+I can see Dad.
+My cat and dog can see me.

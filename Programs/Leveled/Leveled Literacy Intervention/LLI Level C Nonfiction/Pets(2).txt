@@ -1,0 +1,23 @@
+Pets.
+This is my pet.
+It is a cat.
+I like my pet cat.
+This is my pet.
+It is a dog.
+I like my pet dog.
+This is my pet.
+It is a mouse.
+I like my pet mouse.
+This is my pet.
+It is a bird.
+I like my pet bird.
+This is my pet.
+It is a fish.
+I like my pet fish.
+This is our pet.
+It is a rabbit.
+We like our pet rabbit.
+We love our pets!
+
+
+

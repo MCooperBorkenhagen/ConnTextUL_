@@ -1,0 +1,11 @@
+ The Cat is Up
+I can see the dog.
+The dog is down, down, down.
+I can see the cat.
+The cat is up, up, up.
+Mom can see the cat.
+The cat is down!
+The cat is happy!
+Mom is happy!
+The dog is happy!
+I am happy!

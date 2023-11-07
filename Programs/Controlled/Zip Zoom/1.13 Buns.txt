@@ -1,0 +1,8 @@
+ Buns
+I can see a hot bun!
+This hot bun is for me.
+I can see a cold bun.
+This cold bun is for you.
+I can see jam for you and me.
+This bun is not for you and me.
+This bun is for you!
