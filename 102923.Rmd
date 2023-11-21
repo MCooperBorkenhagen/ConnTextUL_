@@ -60,7 +60,7 @@ include = c("correct", "in_traindata", "epoch")
 
 
 d = d %>% 
-  filter(word_raw %nin% c("r", "m", "b", "k", "h", "t")) %>% 
+  filter(word_raw %nin% c("r", "m", "b", "k", "h", "t")) %>% # WJ3 items that aren't informative
   mutate(epoch = as.numeric(epoch),
          correct = as.numeric(correct)) %>% 
   select(word = word_raw, in_validation_set = in_wj3, one_of(include)) %>% 
@@ -70,13 +70,20 @@ d = d %>%
   left_join(read_csv('../words/consistency/chee_consistency.csv') %>% 
               select(word, consistency = ff_all_r)) %>% 
   mutate(consistency = case_when(is.na(consistency) ~ 1,
-                                 TRUE ~ consistency))
+                                 TRUE ~ consistency)) %>% 
+  left_join(preds_by_word %>% 
+              select(word, epoch, phon_distance_from_target), by = c("word", "epoch"))
 
+# these data add in the frequency of words in each program
+# (this facilitates certain anayses below). Also a frequency of
+# zero is included when NA results from the join
+# note that the programs themselves aren't included in this
+# we don't do those analyses here
 programs = d %>% 
-  select(epoch, word, correct,  in_validation_set, in_traindata) %>% 
+  select(epoch, word, correct,  in_validation_set, in_traindata, phon_distance_from_target) %>% 
   left_join(inputs %>% 
               group_by(program_type, word) %>% 
-              summarise(f = n())) %>% 
+              summarise(f = n()), relationship = "many-to-many") %>% # because a given word in d is associated with more than one program type
   mutate(f = case_when(is.na(f) ~ 0,
                        TRUE ~ f))
 
@@ -409,7 +416,7 @@ first_learned = d %>%
   
 wj3_sequence %>% 
   left_join(first_learned %>% 
-              select(word, first_learned)) %>% view()
+              select(word, first_learned)) %>%
   #filter(in_traindata) %>%
   ggplot(aes(sequence, factor(first_learned), label = word, fill = in_traindata)) +
   geom_label(position = position_jitter(height = .5)) +
@@ -421,6 +428,17 @@ wj3_sequence %>%
 ```
 
 
+
+```{r}
+wj3_sequence %>% 
+  left_join(d %>% 
+              filter(epoch == 20) %>% 
+              select(word, phon_distance_from_target)) %>% view()
+  ggplot(aes(sequence, phon_distance_from_target)) +
+  geom_point()
+
+
+```
 
 ## Accuracy for individual programs (rather than types)
 
