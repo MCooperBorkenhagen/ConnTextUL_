@@ -1,6 +1,5 @@
-tidyverse
-conflicted
 Hmisc
 readxl
 papaja
-
+here
+cowplot
