@@ -11,6 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Overview
 These are results from proof of concept trials for the transformer architecture. Test data are from the WJIII. These data were compiled in simulations run by NC in November, 2023 and draw from the dataset `102923_outputs.xlsx`. These data represent the version of the simulations run over all the training words, which can be found in `102923_inputs.csv`.
 
+
+### Processing scripts
+You can find processing scripts for these data in `scripts/102923_data.R` and `102923_global_encoding.R`. There are some differences between these data (the objects for which are noted above) and the data from other runs - so just beware of that.
 ```{r cars}
 require(tidyverse)
 conflicted::conflicts_prefer(dplyr::filter)
@@ -57,7 +60,7 @@ include = c("correct", "in_traindata", "epoch")
 
 
 d = d %>% 
-  filter(word_raw %nin% c("r", "m", "b", "k", "h")) %>% 
+  filter(word_raw %nin% c("r", "m", "b", "k", "h", "t")) %>% 
   mutate(epoch = as.numeric(epoch),
          correct = as.numeric(correct)) %>% 
   select(word = word_raw, in_validation_set = in_wj3, one_of(include)) %>% 
@@ -76,6 +79,17 @@ programs = d %>%
               summarise(f = n())) %>% 
   mutate(f = case_when(is.na(f) ~ 0,
                        TRUE ~ f))
+
+
+
+
+#WJ3 sequence
+wj3_sequence = read_csv('data/wj_iii_form_a.csv') %>% 
+  select(sequence, word = orth) %>% 
+  filter(word %in% d$word) %>% 
+  left_join(d %>% 
+              filter(epoch == 20) %>% 
+              select(word, in_traindata, in_validation_set))
 
 rm(path, sheets)
 ```
@@ -380,7 +394,32 @@ programs %>%
 ```
 
 
-## Insights from specific words
+## The sequence in which words are learned and their relationship to WJ3
+The WJ3 test sets out a specific sequence of learning for the words (and letters) have been normed in their test. In our model we can examine an analogous property by looking at when the word is pronounced correctly for the first time.
+
+```{r LearnabilityMeasures}
+first_learned = d %>% 
+  filter(correct == 1) %>% 
+  group_by(word) %>% 
+  arrange(epoch) %>% 
+  summarise(in_traindata = first(in_traindata),
+            in_validation_set = first(in_validation_set),
+            first_learned = min(epoch))
+
+  
+wj3_sequence %>% 
+  left_join(first_learned %>% 
+              select(word, first_learned)) %>% view()
+  #filter(in_traindata) %>%
+  ggplot(aes(sequence, factor(first_learned), label = word, fill = in_traindata)) +
+  geom_label(position = position_jitter(height = .5)) +
+  theme_apa() +
+  labs(x = "WJ3 sequence", y = "First learned by model") +
+  theme(legend.position = "none")
+
+
+```
+
 
 
 ## Accuracy for individual programs (rather than types)
