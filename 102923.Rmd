@@ -1,0 +1,426 @@
+---
+title: "Proof of Concept (Oct 2023)"
+output: html_document
+date: "2023-10-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+These are results from proof of concept trials for the transformer architecture. Test data are from the WJIII. These data were compiled in simulations run by NC in November, 2023 and draw from the dataset `102923_outputs.xlsx`. These data represent the version of the simulations run over all the training words, which can be found in `102923_inputs.csv`.
+
+```{r cars}
+require(tidyverse)
+conflicted::conflicts_prefer(dplyr::filter)
+
+lapply(read.csv('scripts/requirements.txt', stringsAsFactors = F)[[1]], require, ch = T)
+source('scripts/utilities.R')
+here()
+
+
+inputs = read_csv('data/102923_data.csv') %>% 
+  select(word = word_raw, program_name, program_type)
+
+# these predictions do not include words that are only present in
+# the training set (they do not include words that are only in WJ3)
+preds_by_phoneme = read_csv('data/102923_preds_by_phoneme.csv')
+
+# these predictions do not include words that are only present in
+# the training set (they do not include words that are only in WJ3)
+preds_by_word = read_csv('data/102923_preds_by_word.csv')
+# to fix the missing data above, we need to get the target representations
+# for the words in WJ3 but not in training set
+
+
+# accuracy by word data
+# these data DO include words that are in WJ3 but not in training
+# set, unlike the preds_ data above which do not
+path = 'data/102923_outputs.xlsx'
+sheets = excel_sheets(path)
+
+
+# the main dataframe
+d = read_excel(path, sheet = sheets[1]) %>% 
+  mutate(epoch = str_replace(sheets[1], "epoch 0", ""))
+
+for (sheet in sheets[-1]) {
+  
+  tmp = read_excel(path, sheet = sheet) %>% 
+    mutate(epoch = str_replace(sheet, "epoch 0", ""))
+  d = rbind(d, tmp)
+  
+}
+
+include = c("correct", "in_traindata", "epoch")
+
+
+d = d %>% 
+  filter(word_raw %nin% c("r", "m", "b", "k", "h")) %>% 
+  mutate(epoch = as.numeric(epoch),
+         correct = as.numeric(correct)) %>% 
+  select(word = word_raw, in_validation_set = in_wj3, one_of(include)) %>% 
+  left_join(inputs %>% 
+              group_by(word) %>% 
+              summarise(f = n())) %>% 
+  left_join(read_csv('../words/consistency/chee_consistency.csv') %>% 
+              select(word, consistency = ff_all_r)) %>% 
+  mutate(consistency = case_when(is.na(consistency) ~ 1,
+                                 TRUE ~ consistency))
+
+programs = d %>% 
+  select(epoch, word, correct,  in_validation_set, in_traindata) %>% 
+  left_join(inputs %>% 
+              group_by(program_type, word) %>% 
+              summarise(f = n())) %>% 
+  mutate(f = case_when(is.na(f) ~ 0,
+                       TRUE ~ f))
+
+rm(path, sheets)
+```
+
+### Learning of all words across epochs
+For words in the training set the model achieves generally high learning, but not all words are learned perfectly.
+```{r}
+d %>% 
+  group_by(epoch, word) %>% 
+  summarise(accuracy = mean(correct),
+            in_traindata = first(in_traindata)) %>% 
+  ggplot(aes(epoch, accuracy)) +
+  geom_smooth() +
+  theme_apa() +
+  facet_grid(vars(in_traindata))
+```
+
+Now if we look at only the words that are in the WJ3. Some of these words are in the training data and others are not. Here, it looks as though there is still no generalization to the WJ3 words that aren't in the training set.
+```{r}
+d %>% 
+  group_by(epoch, word) %>% 
+  summarise(accuracy = mean(correct),
+            in_validation_set = first(in_validation_set),
+            in_traindata = first(in_traindata)) %>% 
+  filter(in_validation_set) %>% 
+  ggplot(aes(epoch, accuracy)) +
+  geom_smooth() +
+  theme_apa() +
+  facet_grid(vars(in_traindata))
+
+```
+
+There are 36 words that are in the validation set but not in the training set.
+
+
+```{r}
+d %>% 
+  filter(!in_traindata & in_validation_set) %>% 
+  ggplot(aes(epoch, correct)) +
+  geom_smooth() +
+  labs(title = "Accuracy across epochs for words in WJ3 not in training set") +
+  theme_apa()
+
+```
+
+Inspecting those words in the WJ3 set are learned at least somewhat by the final epoch:
+
+```{r}
+d %>% 
+  filter(!in_traindata & in_validation_set) %>%
+  filter(correct == 1) %>% 
+  select(epoch, word) %>% 
+  knitr::kable()
+
+```
+
+If we calculate accuracy for each word across all epochs and rank order by the aggregate accuracy, you see a skewed distribution. Words in the upper portion are not in the training set or are words that are never read correctly.
+
+```{r}
+d %>% 
+  group_by(word) %>% 
+  summarise(correct = mean(correct)) %>% 
+  arrange(desc(correct)) %>% 
+  mutate(rank = seq_len(n())) %>% 
+  ggplot(aes(correct, reorder(word, rank))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Mean correct per test item (across epochs)", y = "Word (arranged by mean correct)", x = "Correct (as proportion)") +
+  theme_apa() +
+  theme(axis.text.y = element_text(size = 8))
+
+```
+Let's identify the words that are in the training set that are never learned:
+
+```{r}
+tmp = d %>% 
+  filter(in_traindata) %>% 
+  group_by(word) %>% 
+  summarise(accuracy = sum(correct)) %>% 
+  filter(accuracy == 0) %>% 
+  pull(word)
+
+```
+There are `r length(tmp)` words in the training set that are never read correctly. Let's look at the performance on these words as a function of frequency and consistency.
+
+Here we see that words that are never learned are in fact less consistent (using the Chee et al., 2020 norms) and less frequent (using the frequency data implemented in training).
+
+```{r}
+plot_a = d %>% 
+  mutate(never_learned = case_when(word %in% tmp ~ "Never learned",
+                                   TRUE ~ "Learned")) %>% 
+  filter(epoch == 20) %>% 
+  ggplot(aes(factor(never_learned), consistency)) +
+  geom_boxplot() +
+  labs(x = "Learn status", title = "Consistency", y = "Consistency") +
+  theme_apa()
+
+plot_b = d %>% 
+  mutate(never_learned = case_when(word %in% tmp ~ "Never learned",
+                                   TRUE ~ "Learned")) %>% 
+  filter(epoch == 20) %>% 
+  ggplot(aes(factor(never_learned), log(f))) +
+  geom_boxplot() +
+  labs(x = "Learn status", title = "Frequency", y = "Frequency") +
+  theme_apa()
+
+cowplot::plot_grid(plot_a, plot_b)  
+```
+
+These results suggest the potential value in looking at accuracy as a graded measure, rather than binary (we could use MSE for this).
+
+
+## Accuracy as a function of program type
+Words vary in terms of their presence (and frequency) across programs. The data below capture aspects of learning as a function of the frequency within each of the programs.
+
+First, the aggregate accuracy in the two program types across training for words that are present in that program type. This expresses how each of the programs do on their own words throughout development.
+
+
+```{r AccuracyByProgramType}
+plot_data = programs %>% 
+                filter(!is.na(program_type) & in_traindata) %>% 
+                group_by(epoch, program_type) %>% 
+                summarise(sd_ = sd(correct, na.rm = T),
+                          correct = mean(correct),
+                          mean_value = mean(correct),
+                          n = n(),
+                          se_value = sd_/sqrt(n))
+
+
+programs %>% 
+  filter(f > 0) %>% 
+  ggplot(aes(epoch, correct, color = program_type, group = program_type)) +
+  geom_line(stat = "summary") +
+  geom_ribbon(data = plot_data, aes(x = epoch, ymin = mean_value - se_value, ymax = mean_value + se_value), alpha = 0.3) +
+  geom_point(stat = "summary") +
+  labs(x = "Epoch", y = "Accuracy", color = "Program type") +
+  theme_apa()
+```
+
+Based on these data, the leveled texts are achieving an overall higher average accuracy across training items. It is important to remember though that words can appear in different quantities in each of the programs.
+
+### Learning WJ3 words across epochs
+Let's look at these learning curves, but only on the test words from WJ3. This is simply measuring whether or not the program type contains the WJ3 words included in each program type. Nonetheless, these curves are basically undifferentiated (because almost all the WJ3 words that are in one program type are in the other).
+
+```{r}
+plot_data = programs %>% 
+                filter(!is.na(program_type) & in_traindata & in_validation_set) %>% 
+                group_by(epoch, program_type) %>% 
+                summarise(sd_ = sd(correct, na.rm = T),
+                          correct = mean(correct),
+                          mean_value = mean(correct),
+                          n = n(),
+                          se_value = sd_/sqrt(n))
+
+
+programs %>% 
+  filter(f > 0) %>% 
+  filter(!is.na(program_type) & in_traindata & in_validation_set) %>% 
+  ggplot(aes(epoch, correct, color = program_type, group = program_type)) +
+  geom_line(stat = "summary") +
+  #geom_ribbon(data = plot_data, aes(x = epoch, ymin = mean_value - se_value, ymax = mean_value + se_value), alpha = 0.3) +
+  labs(x = "Epoch", y = "Accuracy", color = "Program type") +
+  theme_apa()
+
+```
+
+### Quantities of words in programs
+```{r WordsUniqueToEachProgram}
+words_in_decodable = programs %>% 
+  filter(program_type == 'Decodable') %>% 
+  distinct(word) %>% 
+  pull(word)
+
+  
+words_in_leveled = programs %>% 
+  filter(program_type == 'Leveled') %>% 
+  distinct(word) %>% 
+  pull(word)
+
+words_unique_to_decodable = words_in_decodable[!(words_in_decodable %in% words_in_leveled)]
+
+words_unique_to_leveled = words_in_leveled[!(words_in_leveled %in% words_in_decodable)]
+
+```
+
+
+
+
+```{r AccuracyByProgramType}
+plot_data = programs %>% 
+                filter(!is.na(program_type) & epoch == 20) %>% 
+                group_by(epoch, program_type) %>% 
+                summarise(sd_ = sd(f, na.rm = T),
+                          f = mean(f),
+                          mean_value = mean(f),
+                          n = n(),
+                          se_value = sd_/sqrt(n))
+
+
+plot_a = programs %>% 
+  filter(f > 0 & epoch == 20) %>% 
+  ggplot(aes(program_type, f, fill = program_type)) +
+  geom_bar(stat = "summary", color = "black") +
+  geom_errorbar(data = plot_data, aes(x = program_type, ymin = mean_value - se_value, ymax = mean_value + se_value), width = .25, color = "black") +
+  labs(x = "Program type", y = "Average frequency per word") +
+  theme_apa() +
+  theme(legend.position = "None",
+        axis.title.y = element_text(size = 10))
+
+
+plot_b = programs %>% 
+  filter(f > 0 & epoch == 20) %>% 
+  group_by(program_type) %>% 
+  summarise(f = sum(f)) %>%
+  ggplot(aes(program_type, f, fill = program_type)) +
+  geom_bar(stat = "identity", color = "black") +
+  labs(x = "Program type", y = "Total words") +
+  theme_apa() +
+  theme(legend.position = "None")
+
+plot_c = programs %>% 
+  filter(!is.na(program_type)) %>% 
+  group_by(program_type) %>% 
+  distinct(word) %>% 
+  summarise(f = n()) %>% 
+  ggplot(aes(program_type, f, fill = program_type)) +
+  geom_bar(stat = "summary", color = "black") +
+  labs(x = "Program type", y = "Number of unique words") +
+  theme_apa() +
+  theme(legend.position = "None")
+
+plot_d = tibble(program_type = c("Decodable", "Leveled"),
+                q = c(length(words_unique_to_decodable), length(words_unique_to_leveled))) %>% 
+  ggplot(aes(program_type, q, fill = program_type)) +
+  geom_bar(stat = "identity", color = "black") +
+  labs(x = "Program type", y = "Words unique to the program") +
+  theme_apa() +
+  theme(legend.position = "None")
+
+  
+
+plot_grid(plot_a, plot_b, plot_c, plot_d)
+```
+
+Let's look at how frequency within each program type is associated with accuracy across each epoch. This shows how accuracy is changing across epochs based on the frequency of words in each program type. The frequency effect becomes increasingly minimal across training.
+
+```{r}
+plot_a = programs %>% 
+  filter(program_type == "Decodable") %>% 
+  ggplot(aes(factor(correct), f)) +
+  geom_bar(stat = "summary") +
+  facet_wrap(vars(epoch), ncol = 5) +
+  labs(x = "Accuracy", y = "Frequency", title = "Decodable Texts") +
+  theme_apa()
+
+plot_b = programs %>% 
+  filter(program_type == "Leveled") %>% 
+  ggplot(aes(factor(correct), f)) +
+  geom_bar(stat = "summary") +
+  facet_wrap(vars(epoch), ncol = 5) +
+  labs(x = "Accuracy", y = "Frequency", title = "Leveled Texts") +
+  theme_apa()
+
+plot_grid(plot_a, plot_b)
+```
+
+
+## Accuracy of words unique to one program or the other
+
+```{r AccuracyOfWordsUniqueToProgramsData}
+plot_data = programs %>% 
+  filter(in_traindata &!is.na(program_type)) %>% 
+  mutate(condition = case_when(word %in% words_unique_to_decodable ~ "Decodable",
+                               word %in% words_unique_to_leveled ~ "Leveled",
+                               TRUE ~ "Decodable & Leveled")) %>% 
+    group_by(epoch, condition) %>% 
+    summarise(sd_ = sd(correct, na.rm = T),
+              correct = mean(correct),
+              mean_value = mean(correct),
+              n = n(),
+              se_value = sd_/sqrt(n))
+
+```
+
+The model achieves consistently better performance on the words that are in the decodable programs relative to the other, despite the fact that the decodable programs have any many more words contained in them. However, the model does best (and performs adequately) on words that are shared by both programs (i.e., the most generally useful words). Note however, that the quantity of words that are present in _both_ programs is only slightly greater (`r plot_data %>% filter(epoch == 20 & condition == "Decodable & Leveled") %>% pull(n)`) than the number of words in just the decodable ones (`r plot_data %>% filter(epoch == 20 & condition == "Decodable") %>% pull(n)`), but is vastly more (around 6.5x) than the number of words only in the leveled program (`r plot_data %>% filter(epoch == 20 & condition == "Leveled") %>% pull(n)`).
+
+```{r AccuracyOfWordsUniqueToPrograms}
+
+
+programs %>% 
+  #filter(word %in% c(words_unique_to_decodable, words_unique_to_leveled)) %>% 
+  filter(in_traindata &!is.na(program_type)) %>% 
+  mutate(condition = case_when(word %in% words_unique_to_decodable ~ "Decodable",
+                               word %in% words_unique_to_leveled ~ "Leveled",
+                               TRUE ~ "Decodable & Leveled")) %>% 
+  ggplot(aes(epoch, correct, color = condition, group = condition)) +
+  geom_line(stat = "summary") +
+  geom_ribbon(data = plot_data, aes(x = epoch, ymin = mean_value - se_value, ymax = mean_value + se_value), alpha = 0.3) +
+  geom_point(stat = "summary") +
+  labs(x = "Epoch", y = "Accuracy", color = "Program type", title = "Accuracy on words unique to each program type") +
+  theme_apa()
+
+```
+
+
+## Insights from specific words
+
+
+## Accuracy for individual programs (rather than types)
+
+
+## Phonemes
+## Vowels: schwa
+
+```{r}
+
+schwa_words = phonemes %>% 
+  filter(condition == 'target' & phoneme == 'AH0') %>% 
+  distinct(word) %>% 
+  pull(word)
+
+
+
+schwa_errors = phonemes %>% 
+  filter(condition %in% c('target', 'predicted')) %>% 
+  filter(word %in% schwa_words & phoneme == 'AH0') %>% 
+  filter(epoch == 20) %>% 
+  group_by(epoch, word, phoneme_index) %>% 
+  summarise(across(contains("_f"), ~ difference(.)))
+```
+
+
+
+```{r}
+
+words %>% 
+  group_by(epoch, word) %>% 
+  summarise(accuracy = mean(correct),
+            in_validation_set = first(in_validation_set)) %>% 
+  ggplot(aes(epoch, accuracy)) +
+  geom_bar(stat = "identity") +
+  geom_smooth() +
+  facet_grid(in_validation_set)
+
+```
+
+
+## What we need to do next
+We need to include more words in training and implement a true holdout set (could include holding out WJ3 completely).
