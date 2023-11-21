@@ -169,3 +169,32 @@ phon_features = c("labial_feature", "dental_feature", "alveolar_feature", "palat
                   "open_mid_feature", "near_open_feature", "open_feature", "tense_feature", "retroflex_feature",
                   "round_feature", "post_y_feature", "post_w_feature", "primary_feature", "secondary_feature",
                   "sos_feature", "eos_feature")
+
+padded_distance = function(predicted, target, value = 0, strip_target = T, units_per_segment = 33){
+  
+  predicted = vector_from_string(predicted)
+  target = vector_from_string(target)
+  
+  #' Pad two vectors and calculate the distance between them using L2
+  #' @param predicted The vector representing the prediction
+  #' @param target The vector representing the target
+  #' @param value The value to be used for the pad (default is 0)
+  #' @param strip_target Should the final segment be stripped off the target (the end-of-word segment; default is TRUE)
+  #' @param units_per_segment The number of units expected per phoneme segment (default is 33)
+  
+  #' @returns The square root of the sum of the squared elements provided in ...
+  
+  if (strip_target){
+    target = strip_final_segment(target, units_per_segment = units_per_segment)
+  }
+  
+  max_ = max(length(predicted), length(target))
+  predicted_pad = c(predicted, rep(value, max_ - length(predicted)))
+  target_pad = c(target, rep(value, max_ - length(target)))
+ 
+  return(L2(predicted_pad, target_pad))
+  
+}
+
+
+
