@@ -1,0 +1,33 @@
+{
+    "name": "ConnTextUL_Data Development Container",
+    "build": {
+        "context": "..",
+        "dockerfile": "./Dockerfile.dev"
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.pythonPath": "/usr/local/bin/python",
+                "terminal.integrated.shell.linux": "/bin/bash"
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-toolsai.jupyter",
+                "ms-python.vscode-pylance",
+                "ms-vsliveshare.vsliveshare",
+                "ms-vsliveshare.vsliveshare-audio",
+                "ms-vsliveshare.vsliveshare-pack",
+                "ms-azuretools.vscode-docker",
+                "vscodevim.vim",
+                "ms-python.black-formatter",
+                "GitHub.vscode-pull-request-github",
+                "GitHub.github-vscode-theme",
+                "ms-toolsai.vscode-jupyter-cell-tags",
+                "ms-toolsai.jupyter-keymap",
+                "ms-toolsai.jupyter-renderers",
+                "mechatroner.rainbow-csv",
+                "REditorSupport.r"
+            ]
+        }
+    }
+}
