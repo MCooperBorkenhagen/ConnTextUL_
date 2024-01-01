@@ -6,9 +6,9 @@
 *.DS_Store
 *.Rproj
 
-
 resources/
-
+.venv/
+*.ipynb_checkpoints/
 
 # specific files
 
