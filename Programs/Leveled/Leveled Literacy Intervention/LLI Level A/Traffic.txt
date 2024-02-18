@@ -1,9 +1,0 @@
-Traffic.
-Look at the bike.
-Look at the motorcycle.
-Look at the van.
-Look at the bus.
-Look at the truck.
-Look at the car.
-Look at the traffic.
-

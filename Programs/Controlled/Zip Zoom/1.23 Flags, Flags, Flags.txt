@@ -1,9 +1,0 @@
- Flags, Flags, Flags
-Pat said to Dan, "Meet me by the flag."
-"Here is the flag," said Dan.
-"Pat said to meet by the flag."
-"There is a flag, too."
-"Is this the flag?"
-"Here is a flag and there is a flag."
-"Here is the flag.
-Where is Dan?" said Pat.

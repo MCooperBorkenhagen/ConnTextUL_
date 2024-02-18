@@ -1,8 +1,0 @@
- The Flag
-What is in the bag?
-A new red flag is in the bag.
-What is on the new flag?
-A tag is on the new flag.
-Is the flag for this room?
-No, the flag is not for this room.
-The flag is for the school band.
