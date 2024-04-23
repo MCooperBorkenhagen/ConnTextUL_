@@ -1,9 +1,0 @@
- In and Out
-The little dog is cold.
-The big dog is hot.
-The little dog goes in.
-The big dog goes out.
-The big dog is happy.
-The little dog is sad.
-Here you go!
-You can go out.
